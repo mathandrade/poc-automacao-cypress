@@ -1,0 +1,47 @@
+# ============================================
+# Dependências
+# ============================================
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ============================================
+# Artefatos gerados em runtime
+# ============================================
+reports/
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+
+# Fixtures temporários gerados por execução
+# (mantém o exemplo, ignora as runs)
+cypress/fixtures/cenarios_run_*.json
+
+# Uploads de planilhas do usuário (dados sensíveis)
+backend/uploads/
+uploads/
+
+# ============================================
+# Variáveis de ambiente e segredos
+# ============================================
+.env
+.env.local
+cypress.env.json
+
+# ============================================
+# IDE e SO
+# ============================================
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+
+# ============================================
+# Logs
+# ============================================
+*.log
+npm-debug.log*
+yarn-error.log*
