@@ -1,12 +1,13 @@
 // backend/server.js
-const express = require('express');
-const multer  = require('multer');
-const XLSX    = require('xlsx');
-const fs      = require('fs');
-const path    = require('path');
+const { validarPlanilha } = require('./validators/scenarioSchema');
+const express  = require('express');
+const multer   = require('multer');
+const XLSX     = require('xlsx');
+const fs       = require('fs');
+const path     = require('path');
 const { exec } = require('child_process');
-const cors    = require('cors');
-const crypto  = require('crypto');
+const cors     = require('cors');
+const crypto   = require('crypto');
 
 const app = express();
 app.use(cors());
@@ -56,30 +57,41 @@ app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
         console.log(`📁 Planilha: ${req.file.originalname}`);
         console.log(`🆔 Execution ID: ${executionId}`);
 
-        // ✅ 1. LIMPA results.json antes
+        // 1. Limpa results.json anterior
         if (fs.existsSync(reportPath)) {
             fs.unlinkSync(reportPath);
             console.log('🧹 results.json anterior removido');
         }
 
-        // 2. Excel → JSON com raw:false força todos os valores como string
+        // 2. Excel → JSON (raw:false força valores como string)
         const workbook = XLSX.readFile(planilhaPath);
         const sheet    = workbook.Sheets[workbook.SheetNames[0]];
         const rows     = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: '' });
         const cenarios = normalizarCenarios(rows);
 
+        // 3. Validação de schema antes de prosseguir
+        const { valido, erros } = validarPlanilha(cenarios);
+        if (!valido) {
+            console.error('❌ Planilha inválida:', erros);
+            return res.status(400).json({
+                success: false,
+                error: 'Planilha contém erros de formatação',
+                detalhes: erros
+            });
+        }
+
         console.log(`📊 ${cenarios.length} cenários após normalização`);
         console.log(JSON.stringify(cenarios, null, 2));
 
-        // 3. Salva fixture isolado
+        // 4. Salva fixture isolado (UTF-8 explícito)
         fs.mkdirSync(path.dirname(fixturePath), { recursive: true });
-        fs.writeFileSync(fixturePath, JSON.stringify(cenarios, null, 2));
+        fs.writeFileSync(fixturePath, JSON.stringify(cenarios, null, 2), 'utf8');
 
-        // 4. Executa Cypress
+        // 5. Executa Cypress
         const resultados = await executarCypressReal(cenarios, fixtureFileName);
 
         res.json({
-            success: true,
+            success:  true,
             executionId,
             total:    resultados.total,
             passed:   resultados.passed,
@@ -99,21 +111,22 @@ app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
 });
 
 // ============================================
-// Executa cypress run --env fixtureFile=...
+// Executa `cypress run --env fixtureFile=...`
 // ============================================
 function executarCypressReal(cenarios, fixtureFileName) {
     return new Promise((resolve) => {
         const startTime = Date.now();
-        const cmd = `npx cypress run --spec "cypress/e2e/dynamic-testes.cy.js" --env fixtureFile=${fixtureFileName}`;
+        // ✅ Caminho atualizado para o spec reorganizado na Camada 1.A.1
+        const cmd = `npx cypress run --spec "cypress/e2e/auth/login.cy.js" --env fixtureFile=${fixtureFileName}`;
         console.log(`▶️  ${cmd}`);
 
         exec(cmd, { cwd: path.join(__dirname, '..'), maxBuffer: 10 * 1024 * 1024 },
             (error, stdout, stderr) => {
-                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                const duration   = ((Date.now() - startTime) / 1000).toFixed(2);
+                const reportPath = path.join(__dirname, '../reports/results.json');
+
                 console.log(stdout);
                 if (stderr) console.warn(stderr);
-
-                const reportPath = path.join(__dirname, '../reports/results.json');
 
                 if (fs.existsSync(reportPath)) {
                     try {
@@ -125,13 +138,13 @@ function executarCypressReal(cenarios, fixtureFileName) {
                     }
                 }
 
-                // Fallback se Cypress nem chegou a gravar nada
+                // Fallback: Cypress não gerou relatório (provavelmente quebrou cedo)
                 resolve({
-                    total: cenarios.length,
-                    passed: 0,
-                    failed: cenarios.length,
+                    total:    cenarios.length,
+                    passed:   0,
+                    failed:   cenarios.length,
                     duration: `${duration}s`,
-                    details: cenarios.map(c => ({
+                    details:  cenarios.map(c => ({
                         cenario: c.cenario,
                         status:  'failed',
                         erro:    'Cypress não gerou relatório. Verifique logs do servidor.'
@@ -151,25 +164,30 @@ app.get('/api/status', (req, res) => {
 
 app.get('/api/generate-report', (req, res) => {
     const reportPath = path.join(__dirname, '../reports/results.json');
+
     if (!fs.existsSync(reportPath)) {
         return res.status(404).json({ error: 'Nenhum relatório. Execute os testes primeiro.' });
     }
+
     try {
         const results = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.send(generateHtmlReport(results));
     } catch (e) {
         res.status(500).json({ error: 'Erro ao gerar relatório.', details: e.message });
     }
 });
 
+// ============================================
+// Gerador de relatório HTML
+// ============================================
 function generateHtmlReport(results) {
-    const total = results.total || 0;
-    const passed = results.passed || 0;
-    const failed = results.failed || 0;
+    const total    = results.total  || 0;
+    const passed   = results.passed || 0;
+    const failed   = results.failed || 0;
     const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
-    const passedH = total > 0 ? Math.round((passed / total) * 180) : 0;
-    const failedH = total > 0 ? Math.round((failed / total) * 180) : 0;
+    const passedH  = total > 0 ? Math.round((passed / total) * 180) : 0;
+    const failedH  = total > 0 ? Math.round((failed / total) * 180) : 0;
 
     return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório Cypress</title>
 <style>
@@ -210,10 +228,13 @@ body { background:#f4f6f9; padding:40px; }
 <div><div class="bar failed"></div><div>❌ ${failed}</div></div>
 </div></div>
 <div class="details"><table><thead><tr><th>Cenário</th><th>Status</th><th>Erro</th></tr></thead><tbody>
-${(results.details||[]).map(d=>`<tr><td>${d.cenario}</td><td><span class="status-badge ${d.status}">${d.status==='passed'?'✅ PASSED':'❌ FAILED'}</span></td><td>${d.erro||'-'}</td></tr>`).join('')}
+${(results.details || []).map(d => `<tr><td>${d.cenario}</td><td><span class="status-badge ${d.status}">${d.status === 'passed' ? '✅ PASSED' : '❌ FAILED'}</span></td><td>${d.erro || '-'}</td></tr>`).join('')}
 </tbody></table></div></div></body></html>`;
 }
 
+// ============================================
+// Boot
+// ============================================
 const PORT = 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor em http://localhost:${PORT}`);
