@@ -1,0 +1,29 @@
+[
+  {
+    "cenario": "Login com sucesso",
+    "email": "admin@email.com",
+    "senha": 123456,
+    "resultado_esperado": "sucesso"
+  },
+  {
+    "cenario": "Login com email invalido",
+    "email": "invalido@",
+    "senha": 123456,
+    "resultado_esperado": "erro",
+    "mensagem_esperada": "E-mail inválido."
+  },
+  {
+    "cenario": "Login com senha vazia",
+    "email": "admin@email.com",
+    "senha": "",
+    "resultado_esperado": "erro",
+    "mensagem_esperada": "Senha inválida."
+  },
+  {
+    "cenario": "FALHA - Campo email vazio",
+    "email": "",
+    "senha": "123456",
+    "resultado_esperado": "erro",
+    "mensagem_esperada": "E-mail inválido."
+  }
+]
