@@ -2,9 +2,9 @@
 const { validarPlanilha } = require('./validators/scenarioSchema');
 const config = require('./config');
 const { gerarHtml } = require('./services/reportGenerator');
+const { lerPlanilha } = require('./services/spreadsheet');
 const express  = require('express');
 const multer   = require('multer');
-const XLSX     = require('xlsx');
 const fs       = require('fs');
 const path     = require('path');
 const { exec } = require('child_process');
@@ -19,21 +19,6 @@ const upload = multer({ dest: config.PATHS.uploads });
 
 let isRunning = false;
 
-// ============================================
-// HELPER: normaliza valores vindos do Excel
-//   - Mantém strings como string
-//   - Converte número/boolean para string
-//   - undefined/null vira ''
-// ============================================
-function normalizarCenarios(rows) {
-    return rows.map(r => ({
-        cenario:            r.cenario            != null ? String(r.cenario)            : '',
-        email:              r.email              != null ? String(r.email)              : '',
-        senha:              r.senha              != null ? String(r.senha)              : '',
-        resultado_esperado: r.resultado_esperado != null ? String(r.resultado_esperado) : '',
-        mensagem_esperada:  r.mensagem_esperada  != null ? String(r.mensagem_esperada)  : ''
-    }));
-}
 
 // ============================================
 // POST /api/upload-and-run
@@ -64,13 +49,8 @@ app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
             fs.unlinkSync(reportPath);
             console.log('🧹 results.json anterior removido');
         }
-
-        // 2. Excel → JSON (raw:false força valores como string)
-        const workbook = XLSX.readFile(planilhaPath);
-        const sheet    = workbook.Sheets[workbook.SheetNames[0]];
-        const rows     = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: '' });
-        const cenarios = normalizarCenarios(rows);
-
+        // 2. Lê e normaliza a planilha
+        const cenarios = lerPlanilha(planilhaPath);
         // 3. Validação de schema antes de prosseguir
         const { valido, erros } = validarPlanilha(cenarios);
         if (!valido) {
