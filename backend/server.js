@@ -1,5 +1,6 @@
 // backend/server.js
 const { validarPlanilha } = require('./validators/scenarioSchema');
+const config = require('./config');
 const express  = require('express');
 const multer   = require('multer');
 const XLSX     = require('xlsx');
@@ -13,7 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: config.PATHS.uploads });
 
 let isRunning = false;
 
@@ -48,8 +49,8 @@ app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
     const planilhaPath    = req.file.path;
     const executionId     = `${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const fixtureFileName = `cenarios_run_${executionId}.json`;
-    const fixturePath     = path.join(__dirname, `../cypress/fixtures/${fixtureFileName}`);
-    const reportPath      = path.join(__dirname, '../reports/results.json');
+    const fixturePath     = path.join(config.PATHS.fixtures, fixtureFileName);
+    const reportPath      = config.PATHS.resultsJson;
 
     isRunning = true;
 
@@ -117,13 +118,13 @@ function executarCypressReal(cenarios, fixtureFileName) {
     return new Promise((resolve) => {
         const startTime = Date.now();
         // ✅ Caminho atualizado para o spec reorganizado na Camada 1.A.1
-        const cmd = `npx cypress run --spec "cypress/e2e/auth/login.cy.js" --env fixtureFile=${fixtureFileName}`;
+        const cmd = `npx cypress run --spec "${config.CYPRESS.spec}" --env fixtureFile=${fixtureFileName}`;
         console.log(`▶️  ${cmd}`);
 
-        exec(cmd, { cwd: path.join(__dirname, '..'), maxBuffer: 10 * 1024 * 1024 },
+        exec(cmd, { cwd: config.CYPRESS.cwd, maxBuffer: config.CYPRESS.maxBufferBytes },
             (error, stdout, stderr) => {
                 const duration   = ((Date.now() - startTime) / 1000).toFixed(2);
-                const reportPath = path.join(__dirname, '../reports/results.json');
+                const reportPath = config.PATHS.resultsJson;
 
                 console.log(stdout);
                 if (stderr) console.warn(stderr);
@@ -163,7 +164,7 @@ app.get('/api/status', (req, res) => {
 });
 
 app.get('/api/generate-report', (req, res) => {
-    const reportPath = path.join(__dirname, '../reports/results.json');
+    const reportPath = config.PATHS.resultsJson;
 
     if (!fs.existsSync(reportPath)) {
         return res.status(404).json({ error: 'Nenhum relatório. Execute os testes primeiro.' });
@@ -235,7 +236,6 @@ ${(results.details || []).map(d => `<tr><td>${d.cenario}</td><td><span class="st
 // ============================================
 // Boot
 // ============================================
-const PORT = 3000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor em http://localhost:${PORT}`);
+app.listen(config.PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor em http://localhost:${config.PORT}`);
 });
