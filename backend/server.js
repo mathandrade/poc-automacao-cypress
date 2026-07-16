@@ -1,5 +1,6 @@
 // backend/server.js
 const { validarPlanilha } = require('./validators/scenarioSchema');
+const { executar: executarCypress } = require('./services/cypressRunner');
 const config = require('./config');
 const { gerarHtml } = require('./services/reportGenerator');
 const { lerPlanilha } = require('./services/spreadsheet');
@@ -70,7 +71,7 @@ app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
         fs.writeFileSync(fixturePath, JSON.stringify(cenarios, null, 2), 'utf8');
 
         // 5. Executa Cypress
-        const resultados = await executarCypressReal(cenarios, fixtureFileName);
+        const resultados = await executarCypress(cenarios, fixtureFileName);
 
         res.json({
             success:  true,
@@ -92,50 +93,6 @@ app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
     }
 });
 
-// ============================================
-// Executa `cypress run --env fixtureFile=...`
-// ============================================
-function executarCypressReal(cenarios, fixtureFileName) {
-    return new Promise((resolve) => {
-        const startTime = Date.now();
-        // ✅ Caminho atualizado para o spec reorganizado na Camada 1.A.1
-        const cmd = `npx cypress run --spec "${config.CYPRESS.spec}" --env fixtureFile=${fixtureFileName}`;
-        console.log(`▶️  ${cmd}`);
-
-        exec(cmd, { cwd: config.CYPRESS.cwd, maxBuffer: config.CYPRESS.maxBufferBytes },
-            (error, stdout, stderr) => {
-                const duration   = ((Date.now() - startTime) / 1000).toFixed(2);
-                const reportPath = config.PATHS.resultsJson;
-
-                console.log(stdout);
-                if (stderr) console.warn(stderr);
-
-                if (fs.existsSync(reportPath)) {
-                    try {
-                        const data = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-                        data.duration = `${duration}s`;
-                        return resolve(data);
-                    } catch (e) {
-                        console.error('Erro parseando results.json:', e.message);
-                    }
-                }
-
-                // Fallback: Cypress não gerou relatório (provavelmente quebrou cedo)
-                resolve({
-                    total:    cenarios.length,
-                    passed:   0,
-                    failed:   cenarios.length,
-                    duration: `${duration}s`,
-                    details:  cenarios.map(c => ({
-                        cenario: c.cenario,
-                        status:  'failed',
-                        erro:    'Cypress não gerou relatório. Verifique logs do servidor.'
-                    }))
-                });
-            }
-        );
-    });
-}
 
 // ============================================
 // Endpoints auxiliares
