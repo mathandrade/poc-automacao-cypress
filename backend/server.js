@@ -1,6 +1,7 @@
 // backend/server.js
 const { validarPlanilha } = require('./validators/scenarioSchema');
 const { executar: executarCypress } = require('./services/cypressRunner');
+const { guard, isRunningStatus } = require('./middleware/concurrencyGuard');
 const config = require('./config');
 const { gerarHtml } = require('./services/reportGenerator');
 const { lerPlanilha } = require('./services/spreadsheet');
@@ -18,20 +19,12 @@ app.use(express.json());
 
 const upload = multer({ dest: config.PATHS.uploads });
 
-let isRunning = false;
 
 
 // ============================================
 // POST /api/upload-and-run
 // ============================================
-app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
-
-    if (isRunning) {
-        return res.status(409).json({
-            success: false,
-            error: 'Já existe uma execução em andamento. Aguarde terminar.'
-        });
-    }
+app.post('/api/upload-and-run', guard, upload.single('planilha'), async (req, res) => {
 
     const planilhaPath    = req.file.path;
     const executionId     = `${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
@@ -39,7 +32,6 @@ app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
     const fixturePath     = path.join(config.PATHS.fixtures, fixtureFileName);
     const reportPath      = config.PATHS.resultsJson;
 
-    isRunning = true;
 
     try {
         console.log(`📁 Planilha: ${req.file.originalname}`);
@@ -87,7 +79,6 @@ app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
         console.error('❌ Erro:', error);
         res.status(500).json({ success: false, error: error.message });
     } finally {
-        isRunning = false;
         try { fs.unlinkSync(planilhaPath); } catch (_) {}
         try { fs.unlinkSync(fixturePath); }  catch (_) {}
     }
@@ -98,7 +89,7 @@ app.post('/api/upload-and-run', upload.single('planilha'), async (req, res) => {
 // Endpoints auxiliares
 // ============================================
 app.get('/api/status', (req, res) => {
-    res.json({ running: isRunning, timestamp: new Date().toISOString() });
+    res.json({ running: isRunningStatus(), timestamp: new Date().toISOString() });
 });
 
 app.get('/api/generate-report', (req, res) => {
