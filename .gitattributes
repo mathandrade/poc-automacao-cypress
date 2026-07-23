@@ -1,0 +1,23 @@
+# ============================================
+# Normalização de quebras de linha
+# ============================================
+# Aplica a regra "auto" com preferência por LF em todo o repositório.
+# - No disco (working copy): mantém quebras nativas do sistema operacional
+# - No repositório: sempre armazena como LF
+# Resultado: repo consistente entre Windows, macOS e Linux
+* text=auto eol=lf
+
+# ============================================
+# Tipos binários — nunca converter quebras de linha
+# ============================================
+# Sem essa regra, o Git tentaria "normalizar" quebras dentro de imagens,
+# PDFs, xlsx etc. e corromperia os arquivos silenciosamente.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.xlsx binary
+*.xls  binary
+*.zip  binary
