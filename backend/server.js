@@ -2,6 +2,7 @@
 const { validarPlanilha } = require('./validators/scenarioSchema');
 const { executar: executarCypress } = require('./services/cypressRunner');
 const { guard, isRunningStatus } = require('./middleware/concurrencyGuard');
+const statusRoutes = require('./routes/status');
 const config = require('./config');
 const { gerarHtml } = require('./services/reportGenerator');
 const { lerPlanilha } = require('./services/spreadsheet');
@@ -88,9 +89,7 @@ app.post('/api/upload-and-run', guard, upload.single('planilha'), async (req, re
 // ============================================
 // Endpoints auxiliares
 // ============================================
-app.get('/api/status', (req, res) => {
-    res.json({ running: isRunningStatus(), timestamp: new Date().toISOString() });
-});
+app.use('/api', statusRoutes);
 
 app.get('/api/generate-report', (req, res) => {
     const reportPath = config.PATHS.resultsJson;
