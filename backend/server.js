@@ -3,6 +3,7 @@ const { validarPlanilha } = require('./validators/scenarioSchema');
 const { executar: executarCypress } = require('./services/cypressRunner');
 const { guard, isRunningStatus } = require('./middleware/concurrencyGuard');
 const statusRoutes = require('./routes/status');
+const reportRoutes = require('./routes/report');
 const config = require('./config');
 const { gerarHtml } = require('./services/reportGenerator');
 const { lerPlanilha } = require('./services/spreadsheet');
@@ -90,22 +91,7 @@ app.post('/api/upload-and-run', guard, upload.single('planilha'), async (req, re
 // Endpoints auxiliares
 // ============================================
 app.use('/api', statusRoutes);
-
-app.get('/api/generate-report', (req, res) => {
-    const reportPath = config.PATHS.resultsJson;
-
-    if (!fs.existsSync(reportPath)) {
-        return res.status(404).json({ error: 'Nenhum relatório. Execute os testes primeiro.' });
-    }
-
-    try {
-        const results = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.send(gerarHtml(results));
-    } catch (e) {
-        res.status(500).json({ error: 'Erro ao gerar relatório.', details: e.message });
-    }
-});
+app.use('/api', reportRoutes);
 
 
 app.listen(config.PORT, '0.0.0.0', () => {
