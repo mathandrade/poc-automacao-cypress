@@ -6,7 +6,7 @@ const path = require('path');
 module.exports = defineConfig({
   e2e: {
     // ✅ URL DA APLICAÇÃO SOB TESTE (não confundir com o backend Node)
-    baseUrl: 'https://automationpratice.com.br',
+    baseUrl: process.env.CYPRESS_BASE_URL || 'https://automationpratice.com.br',
 
     specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
     video: false,
