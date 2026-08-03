@@ -3,19 +3,19 @@
 /**
  * Gera o HTML completo do relatório de execução dos testes.
  * Função pura: recebe resultados, retorna string HTML.
- * 
+ *
  * @param {Object} results - Objeto com total, passed, failed, duration e details
  * @returns {string} HTML completo do relatório
  */
 function gerarHtml(results) {
-    const total    = results.total  || 0;
-    const passed   = results.passed || 0;
-    const failed   = results.failed || 0;
-    const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
-    const passedH  = total > 0 ? Math.round((passed / total) * 180) : 0;
-    const failedH  = total > 0 ? Math.round((failed / total) * 180) : 0;
+  const total = results.total || 0;
+  const passed = results.passed || 0;
+  const failed = results.failed || 0;
+  const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+  const passedH = total > 0 ? Math.round((passed / total) * 180) : 0;
+  const failedH = total > 0 ? Math.round((failed / total) * 180) : 0;
 
-    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório Cypress</title>
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório Cypress</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
 body { background:#f4f6f9; padding:40px; }
@@ -54,7 +54,7 @@ body { background:#f4f6f9; padding:40px; }
 <div><div class="bar failed"></div><div>❌ ${failed}</div></div>
 </div></div>
 <div class="details"><table><thead><tr><th>Cenário</th><th>Status</th><th>Erro</th></tr></thead><tbody>
-${(results.details || []).map(d => `<tr><td>${d.cenario}</td><td><span class="status-badge ${d.status}">${d.status === 'passed' ? '✅ PASSED' : '❌ FAILED'}</span></td><td>${d.erro || '-'}</td></tr>`).join('')}
+${(results.details || []).map((d) => `<tr><td>${d.cenario}</td><td><span class="status-badge ${d.status}">${d.status === 'passed' ? '✅ PASSED' : '❌ FAILED'}</span></td><td>${d.erro || '-'}</td></tr>`).join('')}
 </tbody></table></div></div></body></html>`;
 }
 

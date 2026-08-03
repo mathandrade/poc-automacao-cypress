@@ -9,10 +9,10 @@ const router = express.Router();
 // Retorna se há execução em andamento (usado para healthcheck)
 // ============================================
 router.get('/status', (req, res) => {
-    res.json({
-        running:   isRunningStatus(),
-        timestamp: new Date().toISOString()
-    });
+  res.json({
+    running: isRunningStatus(),
+    timestamp: new Date().toISOString(),
+  });
 });
 
 module.exports = router;

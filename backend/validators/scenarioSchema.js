@@ -7,36 +7,28 @@ const { z } = require('zod');
 const cenarioSchema = z.object({
   cenario: z
     .string({ required_error: "Coluna 'cenario' é obrigatória" })
-    .min(1, "O nome do cenário não pode estar vazio"),
+    .min(1, 'O nome do cenário não pode estar vazio'),
 
   email: z
     .string({ required_error: "Coluna 'email' é obrigatória" })
     // ✅ Aceita string vazia (é caso de teste válido) — não força formato de email
     .default(''),
 
-  senha: z
-    .string({ required_error: "Coluna 'senha' é obrigatória" })
-    .default(''),
+  senha: z.string({ required_error: "Coluna 'senha' é obrigatória" }).default(''),
 
-  resultado_esperado: z
-    .enum(['sucesso', 'erro'], {
-      errorMap: () => ({
-        message: "Coluna 'resultado_esperado' deve ser 'sucesso' ou 'erro'"
-      })
+  resultado_esperado: z.enum(['sucesso', 'erro'], {
+    errorMap: () => ({
+      message: "Coluna 'resultado_esperado' deve ser 'sucesso' ou 'erro'",
     }),
+  }),
 
-  mensagem_esperada: z
-    .string()
-    .optional()
-    .default('')
+  mensagem_esperada: z.string().optional().default(''),
 });
 
 // ============================================
 // SCHEMA DA PLANILHA INTEIRA (array de cenários)
 // ============================================
-const planilhaSchema = z
-  .array(cenarioSchema)
-  .min(1, "A planilha deve ter pelo menos 1 cenário");
+const planilhaSchema = z.array(cenarioSchema).min(1, 'A planilha deve ter pelo menos 1 cenário');
 
 // ============================================
 // FUNÇÃO DE VALIDAÇÃO — retorna resultado estruturado
@@ -49,10 +41,10 @@ function validarPlanilha(cenarios) {
   }
 
   // Transforma os erros do zod em formato amigável
-  const erros = resultado.error.issues.map(issue => ({
+  const erros = resultado.error.issues.map((issue) => ({
     linha: typeof issue.path[0] === 'number' ? issue.path[0] + 2 : null, // +2: linha 1 é cabeçalho, e o array é 0-indexed
     campo: issue.path[issue.path.length - 1],
-    mensagem: issue.message
+    mensagem: issue.message,
   }));
 
   return { valido: false, erros };
