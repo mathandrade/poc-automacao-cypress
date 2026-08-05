@@ -34,9 +34,7 @@ jobs:
         run: npm run lint
 
       - name: Executar testes Cypress
-        uses: cypress-io/github-action@v6
-        with:
-          install: false
+        run: npx cypress run
 
       - name: Diagnóstico - listar pasta de relatórios
         if: always()
