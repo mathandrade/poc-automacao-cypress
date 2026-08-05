@@ -38,6 +38,15 @@ jobs:
         with:
           install: false
 
+      - name: Diagnóstico - listar pasta de relatórios
+        if: always()
+        run: |
+          echo "Conteúdo da raiz do projeto:"
+          ls -la
+          echo "---"
+          echo "Conteúdo de cypress/ (se existir):"
+          ls -laR cypress/reports 2>&1 || echo "cypress/reports não existe"
+
       - name: Upload do relatório mochawesome
         if: always()
         uses: actions/upload-artifact@v4
@@ -45,4 +54,3 @@ jobs:
           name: mochawesome-report
           path: cypress/reports/mochawesome
           retention-days: 14
-
