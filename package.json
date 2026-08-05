@@ -9,7 +9,9 @@
     "dev": "nodemon backend/server.js",
     "lint": "eslint backend",
     "lint:fix": "eslint backend --fix",
-    "format": "prettier --write \"backend/**/*.js\""
+    "format": "prettier --write \"backend/**/*.js\"",
+    "report:pdf": "node scripts/generate-report-pdf.js",
+     "test:full": "cypress run && npm run report:pdf"
   },
   "keywords": [],
   "author": "",
@@ -18,11 +20,13 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "cypress": "^15.16.0",
+    "cypress-mochawesome-reporter": "^5.0.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.9.0",
     "nodemon": "^3.1.14",
     "prettier": "^3.9.6",
+    "puppeteer": "^25.5.0",
     "xlsx": "^0.18.5"
   },
   "dependencies": {
@@ -32,5 +36,4 @@
     "multer": "^2.1.1",
     "zod": "^4.4.3"
   }
-
 }

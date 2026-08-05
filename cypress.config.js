@@ -4,6 +4,14 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = defineConfig({
+   reporter: 'cypress-mochawesome-reporter',
+   reporterOptions: {
+   reportDir: 'cypress/reports/mochawesome',
+   charts: true,
+   embeddedScreenshots: true,
+   inlineAssets: true,
+   reportPageTitle: 'Relatório de Testes - POC Automação',
+  },
   e2e: {
     // ✅ URL DA APLICAÇÃO SOB TESTE (não confundir com o backend Node)
     baseUrl: process.env.CYPRESS_BASE_URL || 'https://automationpratice.com.br',
@@ -17,6 +25,7 @@ module.exports = defineConfig({
     pageLoadTimeout: 60000,
 
     setupNodeEvents(on, config) {
+         require('cypress-mochawesome-reporter/plugin')(on);
       // ============================================
       // 1) CARREGA FIXTURE SÍNCRONO → injeta em env
       //    (deprecation do Cypress.env é só WARNING até v16, segue funcionando)

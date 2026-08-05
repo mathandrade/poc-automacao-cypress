@@ -2,6 +2,7 @@
 // Este arquivo é carregado automaticamente antes de cada teste
 
 import './commands';
+import 'cypress-mochawesome-reporter/register';
 
 // Suprime erros não tratados (evita quebra por erros de terceiros)
 Cypress.on('uncaught:exception', (err, runnable) => {

@@ -4,7 +4,7 @@
 const cenarios = Cypress.env('cenarios') || [];
 
 describe('Testes Dinâmicos de Login', () => {
-
+ 
   before(() => {
     cy.log(`📂 Total de cenários: ${cenarios.length}`);
     if (cenarios.length === 0) {
