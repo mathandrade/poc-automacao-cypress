@@ -46,6 +46,24 @@ module.exports = defineConfig({
         console.warn(`⚠️  Fixture não encontrado: ${fixturePath}`);
         config.env.cenarios = [];
       }
+      // ============================================
+      // 1.B) CARREGA FIXTURE DE CADASTRO (estático, sem upload dinâmico)
+      // ============================================
+      const cadastroFixturePath = path.join(__dirname, 'cypress', 'fixtures', 'cenarios_cadastro.json');
+
+      if (fs.existsSync(cadastroFixturePath)) {
+        try {
+          const rawCadastro = fs.readFileSync(cadastroFixturePath, 'utf8');
+          config.env.cenariosCadastro = JSON.parse(rawCadastro);
+          console.log(`✅ Fixture de cadastro carregado (${config.env.cenariosCadastro.length} cenários)`);
+        } catch (e) {
+          console.error('❌ Erro ao parsear cenarios_cadastro.json:', e.message);
+          config.env.cenariosCadastro = [];
+        }
+      } else {
+        console.warn('⚠️  Fixture de cadastro não encontrado: cenarios_cadastro.json');
+        config.env.cenariosCadastro = [];
+      }
 
       // ============================================
       // 2) RESET do results.json antes da execução

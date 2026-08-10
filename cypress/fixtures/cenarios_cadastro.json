@@ -1,0 +1,38 @@
+[
+  {
+    "cenario": "Cadastro com sucesso",
+    "nome": "Maria Teste",
+    "email": "cadastro_teste@email.com",
+    "senha": "123456",
+    "resultado_esperado": "sucesso",
+    "campo_erro": null,
+    "mensagem_esperada": ""
+  },
+  {
+    "cenario": "Cadastro com email invalido",
+    "nome": "Maria Teste",
+    "email": "emailinvalido",
+    "senha": "123456",
+    "resultado_esperado": "erro",
+    "campo_erro": "email",
+    "mensagem_esperada": "O campo e-mail deve ser prenchido corretamente"
+  },
+  {
+    "cenario": "Cadastro com senha invalida",
+    "nome": "Maria Teste",
+    "email": "cadastro_teste2@email.com",
+    "senha": "123",
+    "resultado_esperado": "erro",
+    "campo_erro": "senha",
+    "mensagem_esperada": "O campo senha deve ter pelo menos 6 dígitos"
+  },
+  {
+    "cenario": "Cadastro com nome vazio",
+    "nome": "",
+    "email": "cadastro_teste3@email.com",
+    "senha": "123456",
+    "resultado_esperado": "erro",
+    "campo_erro": "nome",
+    "mensagem_esperada": "O campo nome deve ser prenchido"
+  }
+]
